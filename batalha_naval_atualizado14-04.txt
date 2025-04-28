@@ -1,0 +1,185 @@
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <iomanip>
+
+using namespace std;
+
+int matriz[1000][1000];
+int tamanho;
+
+void inicializarMatriz() {
+    for (int i = 0; i < tamanho; i++)
+        for (int j = 0; j < tamanho; j++)
+            matriz[i][j] = 0;
+}
+
+void show() {
+    cout << "   ";
+    for (int j = 0; j < tamanho; j++) {
+        cout << setw(3) << j + 1 << " ";
+    }
+    cout << endl;
+
+    for (int i = 0; i < tamanho; i++) {
+        cout << " " << static_cast<char>('A' + i) << "  ";
+        for (int j = 0; j < tamanho; j++) {
+            if (matriz[i][j] == 0 || matriz[i][j] == 1 || matriz[i][j] == 2) {
+                cout << " -  ";
+            } else if (matriz[i][j] == 3) {
+                cout << " X  ";
+            } else if (matriz[i][j] == 4) {
+                cout << " *N ";
+            } else if (matriz[i][j] == 5) {
+                cout << " *B ";
+            }
+        }
+        cout << endl;
+    }
+}
+
+void sortearPosicao() {
+    int i, j;
+    int numPosicoes = tamanho;
+    for (int k = 0; k < numPosicoes; k++) {
+        do {
+            i = rand() % tamanho;
+            j = rand() % tamanho;
+        } while (matriz[i][j] != 0);
+        matriz[i][j] = 1; // Navio
+    }
+}
+
+void sortearBomba() {
+    int i, j;
+    int numPosicoes = tamanho;
+    for (int k = 0; k < numPosicoes; k++) {
+        do {
+            i = rand() % tamanho;
+            j = rand() % tamanho;
+        } while (matriz[i][j] != 0);
+        matriz[i][j] = 2; // Bomba
+    }
+}
+
+void jogar() {
+    string entrada;
+    int naviosRestantes = tamanho;
+    int tentativas = 0;
+    int acertos = 0;
+
+    while (true) {
+        cout << "\nDigite a coordenada (ex: A3): ";
+        cin >> entrada;
+
+        if (entrada.length() < 2) {
+            cout << "Coordenada invalida. Tente novamente.\n";
+            continue;
+        }
+
+        char letra = toupper(entrada[0]);
+        string numStr = entrada.substr(1);
+
+        int linha = letra - 'A';
+        int coluna;
+
+        try {
+            coluna = stoi(numStr) - 1;
+        } catch (...) {
+            cout << "Número invalido. Tente novamente.\n";
+            continue;
+        }
+
+        if (linha < 0 || linha >= tamanho || coluna < 0 || coluna >= tamanho) {
+            cout << "Coordenada fora do tabuleiro. Tente novamente.\n";
+            continue;
+        }
+
+        tentativas++;
+
+        if (matriz[linha][coluna] == 1) {
+            cout << " Voce acertou um NAVIO!\n";
+            matriz[linha][coluna] = 4;
+            naviosRestantes--;
+            acertos++;
+        } else if (matriz[linha][coluna] == 2) {
+            cout << " Voce acertou uma BOMBA! Fim de jogo.\n";
+            matriz[linha][coluna] = 5;
+            show();
+            break;
+        } else if (matriz[linha][coluna] == 0) {
+            cout << " Agua! Você errou.\n";
+            matriz[linha][coluna] = 3;
+        } else {
+            cout << " Voce ja tentou essa coordenada.\n";
+            continue;
+        }
+
+        // Verifica navios ao redor
+        int naviosPerto = 0;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                if (dx == 0 && dy == 0) continue;
+
+                int ni = linha + dx;
+                int nj = coluna + dy;
+
+                if (ni >= 0 && ni < tamanho && nj >= 0 && nj < tamanho) {
+                    if (matriz[ni][nj] == 1) {
+                        naviosPerto++;
+                    }
+                }
+            }
+        }
+
+        if (naviosPerto > 0) {
+            cout << " Há " << naviosPerto << " navio(s) por perto!\n";
+        } else {
+            cout << " Agua Nenhum navio por perto.\n";
+        }
+
+        show();
+
+        if (naviosRestantes == 0) {
+            cout << " Parabens! Você afundou todos os navios!\n";
+            break;
+        }
+    }
+
+    cout << "\n===== PLACAR FINAL =====\n";
+    cout << " Tentativas: " << tentativas << endl;
+    cout << " Acertos:    " << acertos << endl;
+    cout << "========================\n";
+}
+
+int main() {
+    srand(time(0));
+    char jogarNovamente;
+
+    do {
+        cout << "Escreva o tamanho do seu tabuleiro (max 26): ";
+        cin >> tamanho;
+
+        if (tamanho < 1 || tamanho > 26) {
+            cout << "Tamanho invalido!!\n";
+            return 1;
+        }
+
+        inicializarMatriz();
+
+        cout << "\n     BATALHA NAVAL...\n\n";
+        sortearPosicao();
+        sortearBomba();
+        show();
+        jogar();
+
+        cout << "\nDeseja jogar novamente? (S/N): ";
+        cin >> jogarNovamente;
+        jogarNovamente = toupper(jogarNovamente);
+        cout << "\n";
+
+    } while (jogarNovamente == 'S');
+
+    cout << "Obrigado por jogar!\n";
+    return 0;
+}
